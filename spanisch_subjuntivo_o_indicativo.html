@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kahoot-Style – Subjuntivo oder Indicativo</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#4b0082,#8a2be2);
+    color:white;
+    text-align:center;
+}
+
+.screen{
+    display:none;
+    padding:20px;
+}
+
+.active{
+    display:block;
+}
+
+h1{
+    font-size:3em;
+    margin-top:40px;
+}
+
+#question{
+    font-size:2em;
+    margin:40px auto;
+    max-width:900px;
+    background:white;
+    color:#222;
+    padding:25px;
+    border-radius:20px;
+}
+
+.answers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    max-width:900px;
+    margin:30px auto;
+}
+
+.answer{
+    padding:30px;
+    border-radius:20px;
+    font-size:1.6em;
+    cursor:pointer;
+    transition:0.2s;
+    font-weight:bold;
+}
+
+.answer:hover{
+    transform:scale(1.03);
+}
+
+.red{background:#e21b3c;}
+.blue{background:#1368ce;}
+.yellow{background:#d89e00;}
+.green{background:#26890c;}
+
+#timer{
+    font-size:2em;
+    margin-top:20px;
+}
+
+#score{
+    font-size:1.5em;
+    margin-top:10px;
+}
+
+button{
+    padding:18px 35px;
+    border:none;
+    border-radius:15px;
+    background:#ffcc00;
+    font-size:1.5em;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.correct{
+    background:#00c853 !important;
+}
+
+.wrong{
+    background:#b71c1c !important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="startScreen" class="screen active">
+    <h1>¿Subjuntivo o Indicativo?</h1>
+    <p style="font-size:1.5em;">Kahoot-Style Quiz mit 20 Fragen</p>
+    <button onclick="startQuiz()">START</button>
+</div>
+
+<div id="quizScreen" class="screen">
+    <div id="timer">15</div>
+    <div id="score">Punkte: 0</div>
+
+    <div id="question"></div>
+
+    <div class="answers">
+        <div class="answer red" onclick="checkAnswer(0)" id="a0"></div>
+        <div class="answer blue" onclick="checkAnswer(1)" id="a1"></div>
+        <div class="answer yellow" onclick="checkAnswer(2)" id="a2"></div>
+        <div class="answer green" onclick="checkAnswer(3)" id="a3"></div>
+    </div>
+</div>
+
+<div id="endScreen" class="screen">
+    <h1>Quiz beendet!</h1>
+    <h2 id="finalScore"></h2>
+    <button onclick="location.reload()">Nochmal spielen</button>
+</div>
+
+<script>
+
+const questions = [
+
+{
+q:"Creo que Juan ___ razón.",
+answers:["tenga","tiene","tengan","tuviera"],
+correct:1
+},
+
+{
+q:"No creo que Marta ___ mañana.",
+answers:["viene","vino","venga","vendrá"],
+correct:2
+},
+
+{
+q:"Es cierto que ellos ___ mucho.",
+answers:["trabajen","trabajan","trabajaban","trabajarían"],
+correct:1
+},
+
+{
+q:"Dudo que Pedro ___ tiempo.",
+answers:["tenía","tiene","tenga","tendrá"],
+correct:2
+},
+
+{
+q:"Pienso que Ana ___ simpática.",
+answers:["sea","es","fuera","será"],
+correct:1
+},
+
+{
+q:"No es verdad que nosotros ___ tarde.",
+answers:["lleguemos","llegamos","llegábamos","llegaríamos"],
+correct:0
+},
+
+{
+q:"Está claro que vosotros ___ cansados.",
+answers:["estéis","estáis","estuvierais","estaréis"],
+correct:1
+},
+
+{
+q:"Quiero que tú ___ más despacio.",
+answers:["hablas","hablaste","hables","hablarás"],
+correct:2
+},
+
+{
+q:"Sé que María ___ francés.",
+answers:["hable","habla","hablara","hablará"],
+correct:1
+},
+
+{
+q:"No pienso que ellos ___ la respuesta.",
+answers:["saben","supieron","sepan","sabrán"],
+correct:2
+},
+
+{
+q:"Busco a alguien que me ___ ayudar.",
+answers:["pueda","puede","podía","podrá"],
+correct:0
+},
+
+{
+q:"Hay una chica que ___ japonés.",
+answers:["hable","hablara","habla","hablaría"],
+correct:2
+},
+
+{
+q:"Me alegro de que vosotros ___ aquí.",
+answers:["estéis","estáis","estuvisteis","estaréis"],
+correct:0
+},
+
+{
+q:"Es obvio que ellos ___ mucho dinero.",
+answers:["tengan","tienen","tenían","tendrán"],
+correct:1
+},
+
+{
+q:"No estoy seguro de que ella ___ venir.",
+answers:["puede","podía","podrá","pueda"],
+correct:3
+},
+
+{
+q:"Está demostrado que el deporte ___ sano.",
+answers:["sea","es","fuera","sería"],
+correct:1
+},
+
+{
+q:"Espero que vosotros ___ bien.",
+answers:["estáis","estéis","estuvisteis","estaréis"],
+correct:1
+},
+
+{
+q:"Veo que tú ___ ocupado.",
+answers:["estás","estés","estabas","estarás"],
+correct:0
+},
+
+{
+q:"No hay nadie que me ___ entender.",
+answers:["puede","podrá","pueda","podía"],
+correct:2
+},
+
+{
+q:"Es verdad que nosotros ___ mucho.",
+answers:["estudiemos","estudiamos","estudiáramos","estudiaremos"],
+correct:1
+}
+
+];
+
+let currentQuestion = 0;
+let score = 0;
+let timer;
+let timeLeft = 15;
+
+function startQuiz(){
+    document.getElementById("startScreen").classList.remove("active");
+    document.getElementById("quizScreen").classList.add("active");
+    loadQuestion();
+}
+
+function loadQuestion(){
+
+    resetButtons();
+
+    if(currentQuestion >= questions.length){
+        endQuiz();
+        return;
+    }
+
+    let q = questions[currentQuestion];
+
+    document.getElementById("question").innerHTML =
+        (currentQuestion+1) + ". " + q.q;
+
+    for(let i=0;i<4;i++){
+        document.getElementById("a"+i).innerHTML = q.answers[i];
+    }
+
+    timeLeft = 15;
+    document.getElementById("timer").innerHTML = "⏳ " + timeLeft;
+
+    timer = setInterval(()=>{
+        timeLeft--;
+        document.getElementById("timer").innerHTML = "⏳ " + timeLeft;
+
+        if(timeLeft <=0){
+            clearInterval(timer);
+            nextQuestion();
+        }
+
+    },1000);
+}
+
+function checkAnswer(index){
+
+    clearInterval(timer);
+
+    let q = questions[currentQuestion];
+
+    if(index === q.correct){
+        score++;
+        document.getElementById("score").innerHTML =
+            "Punkte: " + score;
+
+        document.getElementById("a"+index).classList.add("correct");
+    }else{
+        document.getElementById("a"+index).classList.add("wrong");
+        document.getElementById("a"+q.correct).classList.add("correct");
+    }
+
+    setTimeout(()=>{
+        currentQuestion++;
+        loadQuestion();
+    },1200);
+}
+
+function nextQuestion(){
+    currentQuestion++;
+    loadQuestion();
+}
+
+function resetButtons(){
+
+    const colors = ["red","blue","yellow","green"];
+
+    for(let i=0;i<4;i++){
+        let btn = document.getElementById("a"+i);
+
+        btn.className = "answer " + colors[i];
+    }
+}
+
+function endQuiz(){
+
+    document.getElementById("quizScreen").classList.remove("active");
+    document.getElementById("endScreen").classList.add("active");
+
+    document.getElementById("finalScore").innerHTML =
+        "Du hast " + score + " von 20 Punkten erreicht!";
+}
+
+</script>
+
+</body>
+</html>
